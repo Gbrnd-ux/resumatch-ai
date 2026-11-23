@@ -49,8 +49,13 @@ Struktur JSON yang WAJIB dipenuhi:
   ]
 }`;
 
-    // Model cepat dengan thinkingLevel: 'minimal' agar respons instan dalam 2-5 detik
-    const models = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-flash-lite-latest'];
+    // Hanya gunakan model-model Flash Lite yang stabil, tidak terkena 503 high demand,
+    // dan responsif dalam 2-5 detik. Hindari gemini-3.5-flash yang sering overload.
+    const models = [
+      'gemini-3.5-flash-lite',
+      'gemini-flash-lite-latest',
+      'gemini-3.1-flash-lite-preview',
+    ];
     let textResponse = '';
     let lastError: any = null;
 
@@ -59,7 +64,8 @@ Struktur JSON yang WAJIB dipenuhi:
         const { text } = await generateText({
           model: google(modelName),
           system: systemPrompt,
-          maxRetries: 0,
+          maxRetries: 0, // Jangan tunggu retry berulang jika server overload
+          abortSignal: AbortSignal.timeout(15000), // Batas maksimal 15 detik per model
           providerOptions: {
             google: {
               thinkingLevel: 'minimal',
@@ -77,9 +83,9 @@ Struktur JSON yang WAJIB dipenuhi:
         });
         textResponse = text;
         break;
-      } catch (err) {
+      } catch (err: any) {
         lastError = err;
-        console.warn(`Model ${modelName} gagal atau timeout, beralih ke cadangan...`, err);
+        console.warn(`Model ${modelName} gagal atau sibuk, segera beralih ke cadangan...`);
       }
     }
 
