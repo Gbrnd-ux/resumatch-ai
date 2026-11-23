@@ -64,13 +64,8 @@ Struktur JSON yang WAJIB dipenuhi:
         const { text } = await generateText({
           model: google(modelName),
           system: systemPrompt,
-          maxRetries: 0, // Jangan tunggu retry berulang jika server overload
-          abortSignal: AbortSignal.timeout(15000), // Batas maksimal 15 detik per model
-          providerOptions: {
-            google: {
-              thinkingLevel: 'minimal',
-            },
-          },
+          maxRetries: 0,
+          abortSignal: AbortSignal.timeout(60000), // Berikan waktu 60s (cukup untuk analisis komprehensif ~20-25s)
           messages: [
             {
               role: 'user',
@@ -85,7 +80,7 @@ Struktur JSON yang WAJIB dipenuhi:
         break;
       } catch (err: any) {
         lastError = err;
-        console.warn(`Model ${modelName} gagal atau sibuk, segera beralih ke cadangan...`);
+        console.warn(`Model ${modelName} gagal atau timeout, beralih ke cadangan...`, err?.message || err);
       }
     }
 
